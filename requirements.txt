@@ -1,0 +1,7 @@
+# Minimal requirements for Audio Classification API
+fastapi
+uvicorn
+whisper-at
+python-multipart
+numpy
+tqdm
