@@ -22,6 +22,12 @@ VOCAL_TAGS = {
     "Gospel music", "Lullaby", "Groan", "Grunt"
 }
 
+# Definitive speech tags that guarantee vocal classification
+DEFINITIVE_SPEECH_TAGS = {
+    "Speech", "Male speech, man speaking", "Female speech, woman speaking",
+    "Child speech, kid speaking", "Conversation", "Narration, monologue"
+}
+
 INSTRUMENTAL_TAGS = {
     "Piano", "Electric piano", "Keyboard (musical)", "Musical instrument",
     "Synthesizer", "Organ", "New-age music", "Electronic organ", 
@@ -85,6 +91,13 @@ def get_model(model_size: str = "tiny"):
 
 def classify_audio(top_tags):
     """Classify audio based on tags"""
+    # Check for definitive speech tags first - if any are present, it's definitely vocal
+    has_definitive_speech = any(tag in DEFINITIVE_SPEECH_TAGS for tag in top_tags)
+    
+    if has_definitive_speech:
+        return "Vocal Audio"
+    
+    # Regular classification logic as fallback
     has_vocal = any(tag in VOCAL_TAGS for tag in top_tags)
     has_instrumental = any(tag in INSTRUMENTAL_TAGS for tag in top_tags)
 
