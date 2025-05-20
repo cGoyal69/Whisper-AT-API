@@ -13,16 +13,41 @@ from collections import defaultdict
 VOCAL_TAGS = {
     "Singing", "Speech", "Choir", "Female singing", "Male singing",
     "Chant", "Yodeling", "Shout", "Bellow", "Rapping", "Narration",
-    "Child singing", "Vocal music", "Opera", "A capella", "Voice"
+    "Child singing", "Vocal music", "Opera", "A capella", "Voice",
+    "Male speech, man speaking", "Female speech, woman speaking",
+    "Child speech, kid speaking", "Conversation", "Narration, monologue", 
+    "Babbling", "Speech synthesizer", "Whoop", "Yell", "Battle cry",
+    "Children shouting", "Screaming", "Whispering", "Mantra",
+    "Synthetic singing", "Humming", "Whistling", "Beatboxing",
+    "Gospel music", "Lullaby", "Groan", "Grunt"
 }
 
 INSTRUMENTAL_TAGS = {
     "Piano", "Electric piano", "Keyboard (musical)", "Musical instrument",
-    "Synthesizer", "Organ", "New-age music", "Effects unit", "Distortion",
-    "Background music", "Electronic organ", "Echo", "Jingle", "Christmas music",
-    "Rhythm and blues", "Independent music", "Soundtrack music", "Pop music",
-    "Jazz", "Soul music", "Christian music", "Instrumental music", "Harpsichord",
-    "Guitar", "Bass guitar", "Drums", "Violin", "Trumpet", "Flute", "Saxophone"
+    "Synthesizer", "Organ", "New-age music", "Electronic organ", 
+    "Christmas music", "Rhythm and blues", "Independent music", "Soundtrack music", 
+    "Pop music", "Jazz", "Soul music", "Christian music", "Instrumental music", 
+    "Harpsichord", "Guitar", "Bass guitar", "Drums", "Violin", "Trumpet", 
+    "Flute", "Saxophone", "Plucked string instrument", "Electric guitar", 
+    "Acoustic guitar", "Steel guitar, slide guitar", "Banjo", "Sitar", "Mandolin", 
+    "Ukulele", "Hammond organ", "Sampler", "Percussion", "Drum kit", 
+    "Drum machine", "Drum", "Snare drum", "Bass drum", "Timpani", "Tabla", 
+    "Cymbal", "Hi-hat", "Tambourine", "Marimba, xylophone", 
+    "Vibraphone", "Orchestra", "Brass instrument",
+    "French horn", "Trombone", "Bowed string instrument", "String section", 
+    "Violin, fiddle", "Cello", "Double bass", "Wind instrument, woodwind instrument", 
+    "Clarinet", "Harp", "Harmonica", "Accordion", 
+    "Rock music", "Heavy metal", "Punk rock", "Grunge", "Progressive rock", 
+    "Rock and roll", "Psychedelic rock", "Reggae", "Country", "Swing music", 
+    "Bluegrass", "Funk", "Folk music", "Middle Eastern music", "Disco", 
+    "Classical music", "Electronic music", "House music", "Techno", "Dubstep", 
+    "Drum and bass", "Electronica", "Electronic dance music", "Ambient music", 
+    "Trance music", "Music of Latin America", "Salsa music", "Flamenco", "Blues", 
+    "Music for children", "Music of Africa", "Afrobeat", "Music of Asia", 
+    "Carnatic music", "Music of Bollywood", "Ska", "Traditional music", 
+    "Song", "Theme music", "Video game music", "Dance music", "Wedding music", 
+    "Happy music", "Funny music", "Sad music", "Tender music", "Exciting music", 
+    "Angry music", "Scary music"
 }
 
 app = FastAPI(
