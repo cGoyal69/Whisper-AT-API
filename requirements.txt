@@ -1,7 +1,11 @@
-# Minimal requirements for Audio Classification API
+# requirements.txt
 fastapi
 uvicorn
-whisper-at
 python-multipart
-numpy
 tqdm
+numpy
+aiohttp
+torch
+numba
+more-itertools
+tiktoken==0.3.3

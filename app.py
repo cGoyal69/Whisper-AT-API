@@ -8,52 +8,32 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import whisper_at as whisper
 from collections import defaultdict
+import aiohttp
 
 # Define known vocal and instrumental tags
 VOCAL_TAGS = {
-    "Singing", "Speech", "Choir", "Female singing", "Male singing",
-    "Chant", "Yodeling", "Shout", "Bellow", "Rapping", "Narration",
-    "Child singing", "Vocal music", "Opera", "A capella", "Voice",
+    "Singing", "Speech", "Female singing", "Male singing",
+    "Child singing", "Vocal music", "Voice",
     "Male speech, man speaking", "Female speech, woman speaking",
-    "Child speech, kid speaking", "Conversation", "Narration, monologue", 
-    "Babbling", "Speech synthesizer", "Whoop", "Yell", "Battle cry",
-    "Children shouting", "Screaming", "Whispering", "Mantra",
-    "Synthetic singing", "Humming", "Whistling", "Beatboxing",
-    "Gospel music", "Lullaby", "Groan", "Grunt"
+    "Child speech, kid speaking", "Conversation", "Narration, monologue",
+    "Narration", "Rapping", "Whispering"
 }
-
 # Definitive speech tags that guarantee vocal classification
 DEFINITIVE_SPEECH_TAGS = {
-     "Male speech, man speaking", "Female speech, woman speaking",
+    "Male speech, man speaking", "Female speech, woman speaking",
     "Child speech, kid speaking", "Conversation", "Narration, monologue"
 }
-
+# Strict instrumental tags - only actual instruments
 INSTRUMENTAL_TAGS = {
-    "Piano", "Electric piano", "Keyboard (musical)", "Musical instrument",
-    "Synthesizer", "Organ", "New-age music", "Electronic organ", 
-    "Christmas music", "Rhythm and blues", "Independent music", "Soundtrack music", 
-    "Pop music", "Jazz", "Soul music", "Christian music", "Instrumental music", 
-    "Harpsichord", "Guitar", "Bass guitar", "Drums", "Violin", "Trumpet", 
-    "Flute", "Saxophone", "Plucked string instrument", "Electric guitar", 
-    "Acoustic guitar", "Steel guitar, slide guitar", "Banjo", "Sitar", "Mandolin", 
-    "Ukulele", "Hammond organ", "Sampler", "Percussion", "Drum kit", 
-    "Drum machine", "Drum", "Snare drum", "Bass drum", "Timpani", "Tabla", 
-    "Cymbal", "Hi-hat", "Tambourine", "Marimba, xylophone", 
-    "Vibraphone", "Orchestra", "Brass instrument",
-    "French horn", "Trombone", "Bowed string instrument", "String section", 
-    "Violin, fiddle", "Cello", "Double bass", "Wind instrument, woodwind instrument", 
-    "Clarinet", "Harp", "Harmonica", "Accordion", 
-    "Rock music", "Heavy metal", "Punk rock", "Grunge", "Progressive rock", 
-    "Rock and roll", "Psychedelic rock", "Reggae", "Country", "Swing music", 
-    "Bluegrass", "Funk", "Folk music", "Middle Eastern music", "Disco", 
-    "Classical music", "Electronic music", "House music", "Techno", "Dubstep", 
-    "Drum and bass", "Electronica", "Electronic dance music", "Ambient music", 
-    "Trance music", "Music of Latin America", "Salsa music", "Flamenco", "Blues", 
-    "Music for children", "Music of Africa", "Afrobeat", "Music of Asia", 
-    "Carnatic music", "Music of Bollywood", "Ska", "Traditional music", 
-    "Song", "Theme music", "Video game music", "Dance music", "Wedding music", 
-    "Happy music", "Funny music", "Sad music", "Tender music", "Exciting music", 
-    "Angry music", "Scary music"
+    "Piano", "Electric piano", "Keyboard (musical)", "Synthesizer", "Organ",
+    "Electronic organ", "Harpsichord", "Guitar", "Bass guitar", "Drums", "Violin",
+    "Trumpet", "Flute", "Saxophone", "Plucked string instrument", "Electric guitar",
+    "Acoustic guitar", "Steel guitar, slide guitar", "Banjo", "Sitar", "Mandolin",
+    "Ukulele", "Hammond organ", "Percussion", "Drum kit", "Drum machine", "Drum",
+    "Snare drum", "Bass drum", "Timpani", "Tabla", "Cymbal", "Hi-hat", "Tambourine",
+    "Marimba, xylophone", "Vibraphone", "Brass instrument", "French horn", "Trombone",
+    "Bowed string instrument", "String section", "Violin, fiddle", "Cello", "Double bass",
+    "Wind instrument, woodwind instrument", "Clarinet", "Harp", "Harmonica", "Accordion"
 }
 
 app = FastAPI(
@@ -184,6 +164,63 @@ async def classify_audio_endpoint(
         
     except Exception as e:
         # Clean up and raise exception
+        shutil.rmtree(temp_dir)
+        raise HTTPException(status_code=500, detail=f"Error processing audio: {str(e)}")
+      # Add this import for async HTTP download
+
+class URLClassificationRequest(BaseModel):
+    url: str
+    user_id: str
+    project_id: str
+    audio_id: str
+    model_size: Optional[str] = "tiny"
+
+@app.post("/classify_url")
+async def classify_audio_from_url(
+    background_tasks: BackgroundTasks,
+    request: URLClassificationRequest
+):
+    """
+    Classify audio from a public URL and return result with metadata.
+    
+    - **url**: Publicly accessible audio file URL
+    - **user_id**: User identifier
+    - **project_id**: Project identifier
+    - **audio_id**: Audio identifier
+    - **model_size**: Whisper model size (tiny, base, small)
+    """
+    if request.model_size not in ["tiny", "base", "small"]:
+        raise HTTPException(status_code=400, detail="Invalid model size.")
+
+    # Create temp dir
+    temp_dir = tempfile.mkdtemp()
+    temp_file_path = os.path.join(temp_dir, "temp_audio_file")
+
+    try:
+        # Download audio file from URL
+        async with aiohttp.ClientSession() as session:
+            async with session.get(request.url) as resp:
+                if resp.status != 200:
+                    raise HTTPException(status_code=400, detail="Failed to download audio.")
+                with open(temp_file_path, 'wb') as f:
+                    f.write(await resp.read())
+
+        # Process downloaded file
+        result = process_audio_file(temp_file_path, request.model_size)
+
+        # Schedule cleanup
+        background_tasks.add_task(shutil.rmtree, temp_dir)
+
+        return {
+            "user_id": request.user_id,
+            "project_id": request.project_id,
+            "audio_id": request.audio_id,
+            "transcription": result.transcription,
+            "top_tags": result.top_tags,
+            "classification": result.classification
+        }
+
+    except Exception as e:
         shutil.rmtree(temp_dir)
         raise HTTPException(status_code=500, detail=f"Error processing audio: {str(e)}")
 
