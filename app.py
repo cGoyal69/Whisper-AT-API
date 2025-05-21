@@ -24,7 +24,7 @@ VOCAL_TAGS = {
 
 # Definitive speech tags that guarantee vocal classification
 DEFINITIVE_SPEECH_TAGS = {
-    "Speech", "Male speech, man speaking", "Female speech, woman speaking",
+     "Male speech, man speaking", "Female speech, woman speaking",
     "Child speech, kid speaking", "Conversation", "Narration, monologue"
 }
 
